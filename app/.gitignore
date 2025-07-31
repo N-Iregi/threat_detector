@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+.env
+venv/
+
+# Docker
+*.log
+*.pid
+*.db
+volumes/
+
+# Secrets
+secrets.json
+api_keys.py
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
