@@ -1,6 +1,8 @@
+import os
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
+
 from query_ioc import get_recent_iocs
 from get_ioc_byID import search_ioc_by_id
 from search_ioc_keyword import search_ioc_by_keyword
@@ -9,7 +11,7 @@ from get_malware_list import get_malware_list
 from iocs_malware_fam import search_ioc_by_malware
 from share_IOC import submit_ioc
 
-# Wrapper to fetch recent IOCs (pass days as argument)
+# Wrapper to fetch recent IOCs
 def fetch_recent_iocs(days=3):
     from api_client_details import threatfox_post
     if not (1 <= days <= 7):
@@ -25,7 +27,7 @@ def fetch_ioc_by_id(ioc_id):
     query_params = {"query": "ioc", "id": str(ioc_id)}
     return threatfox_post(query_params)
 
-# Wrapper to search by keyword (IP/Domain)
+# Wrapper to search by keyword
 def fetch_ioc_by_keyword(keyword, exact_match=False):
     from api_client_details import threatfox_post
     from regex_validation import valid_ip, valid_domain
@@ -38,7 +40,7 @@ def fetch_ioc_by_keyword(keyword, exact_match=False):
     }
     return threatfox_post(query_params)
 
-# Wrapper to search IOCs by file hash
+# Wrapper to search by hash
 def fetch_iocs_by_hash(file_hash):
     from api_client_details import threatfox_post
     from regex_validation import hash_validity
@@ -47,12 +49,12 @@ def fetch_iocs_by_hash(file_hash):
     query_params = {"query": "search_hash", "hash": file_hash}
     return threatfox_post(query_params)
 
-# Wrapper to list malware families
+# Wrapper to get malware list
 def fetch_malware_list():
     from api_client_details import threatfox_post
     return threatfox_post({"query": "malware_list"})
 
-# Wrapper to get IOCs by malware family name
+# Wrapper to get IOCs by malware family
 def fetch_iocs_by_malware_family(family, limit=50):
     from api_client_details import threatfox_post
     if not family:
@@ -66,7 +68,7 @@ def fetch_iocs_by_malware_family(family, limit=50):
     }
     return threatfox_post(query_params)
 
-# Wrapper to submit a new IOC
+# Wrapper to submit IOC
 def submit_new_ioc(ioc_type, iocs, threat_type, malware, confidence, comment=""):
     from api_client_details import threatfox_post
     from regex_validation import valid_domain, valid_ip, valid_url, hash_validity
@@ -77,7 +79,6 @@ def submit_new_ioc(ioc_type, iocs, threat_type, malware, confidence, comment="")
     if not isinstance(confidence, int) or not (0 <= confidence <= 100):
         raise ValueError("Confidence must be an integer between 0 and 100.")
 
-    # Validate IOC
     if ioc_type == "domain" and not valid_domain(iocs):
         raise ValueError("Invalid domain format.")
     elif ioc_type == "ip" and not valid_ip(iocs):
@@ -98,58 +99,72 @@ def submit_new_ioc(ioc_type, iocs, threat_type, malware, confidence, comment="")
     }
     return threatfox_post(query_params)
 
-# Create a handler to route HTTP requests to the above functions
+# HTTP Handler
 class RequestHandler(BaseHTTPRequestHandler):
-    
     def do_GET(self):
-        # Parse query parameters
         path = self.path.split('?')[0]
         query_params = parse_qs(urlparse(self.path).query)
-        
-        # Determine which function to call based on URL path
-        if path == "/recent_iocs":
-            days = int(query_params.get('days', [3])[0])  # Default to 3 days
-            response = fetch_recent_iocs(days)
-        elif path == "/ioc_by_id":
-            ioc_id = query_params.get('id', [None])[0]
-            if ioc_id:
-                response = fetch_ioc_by_id(ioc_id)
-            else:
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(b"Error: Missing IOC ID.")
-                return
-        elif path == "/ioc_by_keyword":
-            keyword = query_params.get('keyword', [None])[0]
-            exact_match = query_params.get('exact_match', ['false'])[0].lower() == 'true'
-            if keyword:
-                response = fetch_ioc_by_keyword(keyword, exact_match)
-            else:
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(b"Error: Missing keyword.")
-                return
-        elif path == "/malware_list":
-            response = fetch_malware_list()
-        else:
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b"Error: Endpoint not found.")
-            return
-        
-        # Send response
-        self.send_response(200)
-        self.send_header("Content-type", "application/json")
-        self.end_headers()
-        self.wfile.write(json.dumps(response).encode())
 
-# Start the HTTP server
-def run(server_class=HTTPServer, handler_class=RequestHandler, port=8080):
+        try:
+            # Root health check
+            if path == "/":
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Threat Watcher API is running.")
+                return
+
+            elif path == "/recent_iocs":
+                days = int(query_params.get('days', [3])[0])
+                result = fetch_recent_iocs(days)
+
+            elif path == "/ioc_by_id":
+                ioc_id = query_params.get('id', [None])[0]
+                if not ioc_id:
+                    raise ValueError("Missing 'id' parameter.")
+                result = fetch_ioc_by_id(ioc_id)
+
+            elif path == "/ioc_by_keyword":
+                keyword = query_params.get('keyword', [None])[0]
+                exact_match = query_params.get('exact_match', ['false'])[0].lower() == 'true'
+                if not keyword:
+                    raise ValueError("Missing 'keyword' parameter.")
+                result = fetch_ioc_by_keyword(keyword, exact_match)
+
+            elif path == "/malware_list":
+                result = fetch_malware_list()
+
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Error: Endpoint not found.")
+                return
+
+            # Success response
+            response_bytes = json.dumps(result, indent=2).encode()
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Content-Length", str(len(response_bytes)))
+            self.end_headers()
+            self.wfile.write(response_bytes)
+
+        except ValueError as ve:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(f"Bad Request: {str(ve)}".encode())
+
+        except Exception as e:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(f"Internal Server Error: {str(e)}".encode())
+
+# Run the HTTP server
+def run(server_class=HTTPServer, handler_class=RequestHandler, port=None):
+    port = port or int(os.getenv("PORT", 8080))
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    print(f"Starting server on port {port}...")
+    print(f"Threat Watcher running on port {port}...")
     httpd.serve_forever()
 
 if __name__ == "__main__":
-    run(port=8080)
-
+    run()
