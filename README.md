@@ -1,6 +1,6 @@
-# 🛡️ Threat Watcher CLI API
+# 🛡️ Threat Detector CLI API
 
-Threat Watcher is a CLI-based threat intelligence tool that interfaces with the [ThreatFox API](https://threatfox.abuse.ch/) to allow users to **query and submit Indicators of Compromise (IOCs)**. It is deployed on multiple HTTP servers behind a **load balancer** and is accessible via web browsers or `curl` with user-friendly, human-readable output.
+Threat Detector is a CLI-based threat intelligence tool that interfaces with the [ThreatFox API](https://threatfox.abuse.ch/) to allow users to **query and submit Indicators of Compromise (IOCs)**. It is deployed on multiple HTTP servers behind a **load balancer** and is accessible via web browsers or `curl` with user-friendly, human-readable output.
 
 ## Deployment Overview
 
@@ -101,13 +101,21 @@ Basic /etc/haproxy/haproxy.cfg:
 ```
 frontend http_front
    bind *:80
-   default_backend http_back
+   default_backend webapps
 
-backend http_back
-   balance roundrobin
-   server web01 192.168.1.10:8080 check
-   server web02 192.168.1.11:8080 check
+backend webapps
+  balance roundrobin
+  server web01 172.20.0.11:8080 check
+  server web02 172.20.0.12:8080 check
 ```
+
+5. Reload HAProxy:
+   ```
+   docker exec -it lb-01 sh -c 'haproxy -sf $(pidof haproxy) -f /etc/haproxy/haproxy.cfg'
+   ```
+
+6. Test:
+From your host: curl http://localhost and the port you exposed on lb-01
 
 ### Validation & Security
 All user input is validated:
