@@ -1,6 +1,6 @@
 # 🛡️ Threat Detector CLI API
 
-Threat Detector is a CLI-based threat intelligence tool that interfaces with the [ThreatFox API](https://threatfox.abuse.ch/) to allow users to **query and submit Indicators of Compromise (IOCs)**. It is deployed on multiple HTTP servers behind a **load balancer** and is accessible via web browsers or `curl` with user-friendly, human-readable output.
+Threat Detector is a CLI-based threat intelligence tool that interfaces with the [ThreatFox API](https://threatfox.abuse.ch/api/) to allow users to **query and submit Indicators of Compromise (IOCs)**. It is deployed on multiple HTTP servers behind a **load balancer** and is accessible via web browsers or `curl` with user-friendly, human-readable output.
 
 ## Deployment Overview
 
