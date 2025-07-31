@@ -2,7 +2,7 @@
 
 Threat Watcher is a CLI-based threat intelligence tool that interfaces with the [ThreatFox API](https://threatfox.abuse.ch/) to allow users to **query and submit Indicators of Compromise (IOCs)**. It is deployed on multiple HTTP servers behind a **load balancer** and is accessible via web browsers or `curl` with user-friendly, human-readable output.
 
-## 🌐 Deployment Overview
+## Deployment Overview
 
 - Implemented as a Python CLI server using `http.server`.
 - Deployed on multiple servers (e.g., Web01, Web02) with an **HAProxy** load balancer (Lb01).
@@ -11,7 +11,7 @@ Threat Watcher is a CLI-based threat intelligence tool that interfaces with the 
 
 ---
 
-## 🚀 Features
+## Features
 
 - 🔍 Query IOCs by:
   - ID
@@ -40,7 +40,7 @@ All endpoints are `GET` requests and return plain text responses.
 | `/ioc_by_malware?family=ZLoader&limit=20` | Get IOCs related to a malware family |
 | `/submit_ioc?...` | Submit a new IOC (see below) |
 
-### 🧾 Submitting IOCs
+### Submitting IOCs
 
 Example submission format:
 
@@ -57,11 +57,11 @@ Required fields:
 
 ---
 
-## 🧪 Example Usage
+### Example Usage
 
 Using `curl` to query IOC by ID:
 
-```bash
+```
 curl http://localhost:8080/ioc_by_id?id=123456
 Output:
 
@@ -71,35 +71,32 @@ Threat type of IOC: phishing - Credential harvesting
 Malware name in IOC: ZLoader
 Level of malice carried: 95
 ...
+
+```
+
+
 ⚙️ Setup & Deployment
 1. Dependencies
 Install requirements:
 
-bash
-Copy
-Edit
 pip install -r requirements.txt
 2. Run Locally
-bash
-Copy
-Edit
+```
 python3 main.py
 Server runs by default on port 8080.
+```
 
-3. Docker (Optional)
+3. Docker
 If using Docker:
-
-bash
-Copy
-Edit
+```
 docker build -t threatwatcher .
 docker run -p 8080:8080 threatwatcher
+```
+
 4. HAProxy Load Balancer (Sample config)
 Basic /etc/haproxy/haproxy.cfg:
 
-cfg
-Copy
-Edit
+```
 frontend http_front
    bind *:80
    default_backend http_back
@@ -108,7 +105,9 @@ backend http_back
    balance roundrobin
    server web01 192.168.1.10:8080 check
    server web02 192.168.1.11:8080 check
-🧠 Validation & Security
+```
+
+### Validation & Security
 All user input is validated:
 
 IPs, domains, hashes checked with regex
@@ -117,15 +116,18 @@ Malformed or missing parameters return clear error messages
 
 Confidence level constrained to 0–100
 
-No sensitive credentials are stored or transmitted
+No sensitive credentials are stored or transmitted(using .gitignore to exclude .env file containing API key)
 
-🤝 Contributing
-Pull requests and suggestions are welcome! Please open issues to report bugs or request features.
+### Challenges I encountered during development
+1. For a CLI, I founnd it difficult to deploy it on the server
+      It was hard but i tried using **http.server** which made it easier to get responses using a browser and not just from the command line
+2. Responses on command line and after deploying were different; i only got json responses in the browser after deploying - the more I tried to fix it, the more I made my work complex and confusing.
+      Honestly, I left it at that. I wish I made a simple webpage. I will work to change it using HTML, CSS, and javascript
 
-📜 License
+
+### License
 This project is licensed under the MIT License.
 
-✉️ Author
-Developed by [Your Name Here]
-Bachelor of Software Engineering
-Passionate about cybersecurity, threat intel, and automation.
+### Credits
+1. Abuse.ch
+2. Spamhaus
