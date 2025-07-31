@@ -78,8 +78,10 @@ Level of malice carried: 95
 ⚙️ Setup & Deployment
 1. Dependencies
 Install requirements:
-
+```
 pip install -r requirements.txt
+```
+
 2. Run Locally
 ```
 python3 main.py
