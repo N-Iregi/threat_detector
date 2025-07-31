@@ -43,9 +43,9 @@ All endpoints are `GET` requests and return plain text responses.
 ### Submitting IOCs
 
 Example submission format:
-
+```
 /submit_ioc?ioc_type=domain&iocs=malicious.site&threat_type=phishing&malware=ZLoader&confidence=85&comment=Seen+in+open+phishing+campaign
-
+```
 
 Required fields:
 - `ioc_type` (domain, ip, url, md5, sha1, sha256)
@@ -91,8 +91,8 @@ Server runs by default on port 8080.
 3. Docker
 If using Docker:
 ```
-docker build -t threatwatcher .
-docker run -p 8080:8080 threatwatcher
+docker build -t threat_detector .
+docker run -p 8080:8080 threat_detector
 ```
 
 4. HAProxy Load Balancer (Sample config)
